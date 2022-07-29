@@ -6,7 +6,6 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"os"
 )
 
 type StructVisitor struct {
@@ -39,12 +38,7 @@ type TagFormatter interface {
 	Format(*ast.Field)
 }
 
-func FormatTags(filename string, tagfmt TagFormatter) (diff []byte, err error) {
-	src, err := os.ReadFile(filename)
-	if err != nil {
-		return
-	}
-
+func FormatTags(filename string, tagfmt TagFormatter) (res []byte, err error) {
 	fset := token.NewFileSet()
 	astFile, sts, err := ParseFile(fset, filename)
 	if err != nil {
@@ -64,6 +58,6 @@ func FormatTags(filename string, tagfmt TagFormatter) (diff []byte, err error) {
 		return
 	}
 
-	diff = Diff(filename, src, filename+".orig", buf.Bytes())
+	res = buf.Bytes()
 	return
 }

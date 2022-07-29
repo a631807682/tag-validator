@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"go/ast"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -36,14 +37,23 @@ func (*copyFormatter) Format(field *ast.Field) {
 
 func TestFormatCopyTags(t *testing.T) {
 	formatter := &copyFormatter{}
-	diffData, err := FormatTags("../testdatas/models.go.txt", formatter)
+	filename1 := "../testdatas/models.go.txt"
+	filename2 := "../testdatas/copy_format_models.go.txt"
+
+	res, err := FormatTags(filename1, formatter)
 	if err != nil {
 		t.Error(err)
 	}
-	if len(diffData) == 0 {
-		t.Errorf("diff data is empty")
+
+	expectData, err := os.ReadFile(filename2)
+	if err != nil {
+		t.Error(err)
 	}
-	fmt.Print(string(diffData))
+
+	diff := Diff(filename1, res, filename2+".orig", expectData)
+	if len(diff) != 0 {
+		t.Errorf("expect not equal diff data:\n%s", string(diff))
+	}
 }
 
 type nochangeFormatter struct {
@@ -56,11 +66,21 @@ func (*nochangeFormatter) Format(field *ast.Field) {}
 
 func TestFormatNochangeTags(t *testing.T) {
 	formatter := &nochangeFormatter{}
-	diffData, err := FormatTags("../testdatas/models.go.txt", formatter)
+
+	filename := "../testdatas/models.go.txt"
+
+	res, err := FormatTags(filename, formatter)
 	if err != nil {
 		t.Error(err)
 	}
-	if len(diffData) != 0 {
-		t.Errorf("diff data not empty \n %s", string(diffData))
+
+	expectData, err := os.ReadFile(filename)
+	if err != nil {
+		return
+	}
+
+	diff := Diff(filename, res, filename, expectData)
+	if len(diff) != 0 {
+		t.Errorf("expect not equal diff data:\n%s", string(diff))
 	}
 }
